@@ -22,7 +22,9 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
 }
 
-body { min-height: 100svh; }
+body {
+  min-height: 100svh;
+}
 
 #screen {
   position: fixed;
@@ -30,6 +32,12 @@ body { min-height: 100svh; }
   width: 100%;
   height: 100%;
   background: #000 url("lockscreen.png") center center / cover no-repeat;
+  transition: background .2s ease;
+}
+
+/* MODO PRETO */
+#screen.black-mode {
+  background: #000;
 }
 
 #dynamicArea {
@@ -39,6 +47,7 @@ body { min-height: 100svh; }
   width: 100%;
   height: 31%;
   background: rgba(0,0,0,.88);
+  transition: opacity .2s ease;
 }
 
 #date {
@@ -49,6 +58,7 @@ body { min-height: 100svh; }
   text-align: center;
   font-size: clamp(17px,4.5vw,23px);
   font-weight: 400;
+  transition: opacity .2s ease;
 }
 
 #clock {
@@ -62,7 +72,17 @@ body { min-height: 100svh; }
   font-weight: 300;
   letter-spacing: -5px;
   font-variant-numeric: tabular-nums;
+  transition: opacity .2s ease;
 }
+
+/* No modo preto, data e hora desaparecem */
+#screen.black-mode #dynamicArea,
+#screen.black-mode #date,
+#screen.black-mode #clock {
+  opacity: 0;
+}
+
+/* CONTROLES */
 
 #controls {
   position: absolute;
@@ -92,8 +112,13 @@ body { min-height: 100svh; }
   padding: 0;
 }
 
-#cameraToggle { left: max(7vw, 28px); }
-#recordToggle { right: max(7vw, 28px); }
+#cameraToggle {
+  left: max(7vw, 28px);
+}
+
+#recordToggle {
+  right: max(7vw, 28px);
+}
 
 .icon-img {
   width: 31px;
@@ -125,6 +150,7 @@ body { min-height: 100svh; }
 }
 
 /* BOTÃO DE TROCA DE CÂMERA */
+
 #cameraSwitch {
   position: absolute;
   left: 50%;
@@ -146,6 +172,28 @@ body { min-height: 100svh; }
   opacity: .45;
 }
 
+/* BOTÃO DO MODO DA TELA */
+/* Mesmas características visuais do cameraSwitch */
+
+#modeSwitch {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 47px;
+  width: 160px;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20,20,20,.72);
+  color: transparent;
+  font-size: 0;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+
+/* ESTADO */
+
 #state {
   position: absolute;
   left: 50%;
@@ -157,6 +205,11 @@ body { min-height: 100svh; }
   background: rgba(0,0,0,.48);
   font-size: 13px;
   color: rgba(255,255,255,.9);
+  z-index: 5;
+}
+
+#screen.black-mode #state {
+  background: rgba(0,0,0,.85);
 }
 
 #statusDot {
@@ -168,8 +221,15 @@ body { min-height: 100svh; }
   margin-right: 6px;
 }
 
-#statusDot.active { background: #35d66b; }
-#statusDot.recording { background: #ff3333; }
+#statusDot.active {
+  background: #35d66b;
+}
+
+#statusDot.recording {
+  background: #ff3333;
+}
+
+/* FEED DA CÂMERA */
 
 #cameraFeed {
   position: fixed;
@@ -197,17 +257,24 @@ body { min-height: 100svh; }
 
   <div id="clock">00:00</div>
 
-  <!-- ÁREA DE TOQUE PARA TROCAR A CÂMERA -->
+  <!-- BOTÃO PARA TROCAR A CÂMERA -->
   <button
     id="cameraSwitch"
     disabled
     aria-label="Alternar câmera">
   </button>
 
+  <!-- ESTADO DA CÂMERA/GRAVAÇÃO -->
   <div id="state">
     <span id="statusDot"></span>
     <span id="stateText">Deslize para desbloquear</span>
   </div>
+
+  <!-- BOTÃO PARA TROCAR O MODO DA TELA -->
+  <button
+    id="modeSwitch"
+    aria-label="Alternar modo da tela">
+  </button>
 
   <div id="controls">
 
@@ -257,11 +324,13 @@ body { min-height: 100svh; }
   height="720">
 </canvas>
 
-
 <script>
 
-const video = document.getElementById("cameraFeed");
-const canvas = document.getElementById("processor");
+const video =
+  document.getElementById("cameraFeed");
+
+const canvas =
+  document.getElementById("processor");
 
 const cameraToggle =
   document.getElementById("cameraToggle");
@@ -271,6 +340,9 @@ const recordToggle =
 
 const cameraSwitch =
   document.getElementById("cameraSwitch");
+
+const modeSwitch =
+  document.getElementById("modeSwitch");
 
 const cameraLabel =
   document.getElementById("cameraLabel");
@@ -290,6 +362,9 @@ const clock =
 const date =
   document.getElementById("date");
 
+const screen =
+  document.getElementById("screen");
+
 
 let stream = null;
 
@@ -304,6 +379,8 @@ let recordingStream = null;
 let facingMode = "environment";
 
 let frameLoopRunning = false;
+
+let blackMode = false;
 
 
 /* RELÓGIO */
@@ -324,13 +401,19 @@ function updateClock() {
       weekday: "long",
       day: "numeric",
       month: "long"
-    }).replace(/^./, c => c.toUpperCase());
+    }).replace(
+      /^./,
+      c => c.toUpperCase()
+    );
 
 }
 
 updateClock();
 
-setInterval(updateClock, 1000);
+setInterval(
+  updateClock,
+  1000
+);
 
 
 /* ESTADO */
@@ -351,7 +434,8 @@ function setState(
     isRecording
   );
 
-  stateText.textContent = text;
+  stateText.textContent =
+    text;
 
 }
 
@@ -367,11 +451,13 @@ function getCameraName() {
 }
 
 
-/* INICIA A CÂMERA */
+/* INICIA CÂMERA */
 
 async function startCamera() {
 
-  if (!navigator.mediaDevices?.getUserMedia) {
+  if (
+    !navigator.mediaDevices?.getUserMedia
+  ) {
 
     setState(
       false,
@@ -386,49 +472,54 @@ async function startCamera() {
   try {
 
     const newStream =
-      await navigator.mediaDevices.getUserMedia({
+      await navigator.mediaDevices
+        .getUserMedia({
 
-        video: {
+          video: {
 
-          facingMode: {
-            ideal: facingMode
+            facingMode: {
+              ideal: facingMode
+            },
+
+            width: {
+              ideal: 1280
+            },
+
+            height: {
+              ideal: 720
+            }
+
           },
 
-          width: {
-            ideal: 1280
-          },
+          audio: false
 
-          height: {
-            ideal: 720
-          }
-
-        },
-
-        audio: false
-
-      });
+        });
 
 
-    stream = newStream;
+    stream =
+      newStream;
 
 
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
 
     await video.play();
 
 
-    cameraToggle.classList.add("active");
+    cameraToggle.classList.add(
+      "active"
+    );
 
     cameraLabel.textContent =
       "Lanterna";
 
 
-    recordToggle.disabled = false;
+    recordToggle.disabled =
+      false;
 
-    cameraSwitch.disabled = false;
+    cameraSwitch.disabled =
+      false;
 
-
-    /* O BOTÃO DA DIREITA MOSTRA A CÂMERA ATUAL */
 
     recordLabel.textContent =
       getCameraName();
@@ -464,7 +555,7 @@ async function startCamera() {
 }
 
 
-/* PROCESSAMENTO DO VÍDEO */
+/* PROCESSAMENTO */
 
 function startFrameProcessing() {
 
@@ -472,7 +563,8 @@ function startFrameProcessing() {
     return;
   }
 
-  frameLoopRunning = true;
+  frameLoopRunning =
+    true;
 
   processFrames();
 
@@ -483,7 +575,8 @@ function processFrames() {
 
   if (!stream) {
 
-    frameLoopRunning = false;
+    frameLoopRunning =
+      false;
 
     return;
 
@@ -504,8 +597,11 @@ function processFrames() {
       canvas.height !== height
     ) {
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
 
     }
 
@@ -537,7 +633,7 @@ function processFrames() {
 }
 
 
-/* DESLIGA A CÂMERA */
+/* DESLIGA CÂMERA */
 
 function stopCamera() {
 
@@ -550,14 +646,17 @@ function stopCamera() {
 
     stream
       .getTracks()
-      .forEach(track => track.stop());
+      .forEach(
+        track => track.stop()
+      );
 
     stream = null;
 
   }
 
 
-  video.srcObject = null;
+  video.srcObject =
+    null;
 
 
   cameraToggle.classList.remove(
@@ -568,9 +667,11 @@ function stopCamera() {
     "Lanterna";
 
 
-  recordToggle.disabled = true;
+  recordToggle.disabled =
+    true;
 
-  cameraSwitch.disabled = true;
+  cameraSwitch.disabled =
+    true;
 
 
   recordLabel.textContent =
@@ -602,7 +703,9 @@ function getRecorderMimeType() {
 
   return types.find(
     type =>
-      MediaRecorder.isTypeSupported(type)
+      MediaRecorder.isTypeSupported(
+        type
+      )
   ) || "";
 
 }
@@ -630,21 +733,13 @@ function startRecording() {
   recordedChunks = [];
 
 
-  /*
-   * A gravação NÃO será feita diretamente
-   * no stream da câmera.
-   *
-   * Ela será feita pelo canvas.
-   *
-   * Isso permite trocar a câmera sem
-   * interromper o MediaRecorder.
-   */
-
   try {
 
     if (
       !recordingStream ||
-      recordingStream.getTracks().length === 0
+      recordingStream
+        .getTracks()
+        .length === 0
     ) {
 
       recordingStream =
@@ -719,20 +814,21 @@ function startRecording() {
   }
 
 
-  recorder.ondataavailable = event => {
+  recorder.ondataavailable =
+    event => {
 
-    if (
-      event.data &&
-      event.data.size > 0
-    ) {
+      if (
+        event.data &&
+        event.data.size > 0
+      ) {
 
-      recordedChunks.push(
-        event.data
-      );
+        recordedChunks.push(
+          event.data
+        );
 
-    }
+      }
 
-  };
+    };
 
 
   recorder.onstop =
@@ -742,18 +838,14 @@ function startRecording() {
   recorder.start();
 
 
-  recording = true;
+  recording =
+    true;
 
 
   recordToggle.classList.add(
     "recording"
   );
 
-
-  /*
-   * O botão continua mostrando
-   * qual câmera está sendo utilizada.
-   */
 
   recordLabel.textContent =
     getCameraName();
@@ -785,7 +877,8 @@ function stopRecording() {
   recorder.stop();
 
 
-  recording = false;
+  recording =
+    false;
 
 
   recordToggle.classList.remove(
@@ -805,7 +898,7 @@ function stopRecording() {
 }
 
 
-/* SALVA O VÍDEO */
+/* SALVA GRAVAÇÃO */
 
 function saveRecording() {
 
@@ -846,7 +939,8 @@ function saveRecording() {
     );
 
 
-  a.href = url;
+  a.href =
+    url;
 
 
   a.download =
@@ -858,7 +952,9 @@ function saveRecording() {
       )}.${ext}`;
 
 
-  document.body.appendChild(a);
+  document.body.appendChild(
+    a
+  );
 
 
   a.click();
@@ -876,16 +972,7 @@ function saveRecording() {
 }
 
 
-/*
- * TROCA DE CÂMERA
- *
- * IMPORTANTE:
- * NÃO chama stopRecording().
- *
- * O MediaRecorder continua gravando
- * o canvas enquanto a fonte da imagem
- * muda de câmera.
- */
+/* TROCA DE CÂMERA */
 
 async function switchCamera() {
 
@@ -898,12 +985,6 @@ async function switchCamera() {
     recording;
 
 
-  /*
-   * Guarda o track atual somente para
-   * desligá-lo depois que a nova câmera
-   * estiver disponível.
-   */
-
   const oldStream =
     stream;
 
@@ -914,61 +995,47 @@ async function switchCamera() {
       : "environment";
 
 
-  /*
-   * Tenta abrir a nova câmera primeiro.
-   */
-
   try {
 
     const newStream =
-      await navigator.mediaDevices.getUserMedia({
+      await navigator.mediaDevices
+        .getUserMedia({
 
-        video: {
+          video: {
 
-          facingMode: {
-            exact: newFacingMode
+            facingMode: {
+              exact: newFacingMode
+            },
+
+            width: {
+              ideal: 1280
+            },
+
+            height: {
+              ideal: 720
+            }
+
           },
 
-          width: {
-            ideal: 1280
-          },
+          audio: false
 
-          height: {
-            ideal: 720
-          }
+        });
 
-        },
-
-        audio: false
-
-      });
-
-
-    /*
-     * Atualiza a câmera selecionada.
-     */
 
     facingMode =
       newFacingMode;
 
 
-    /*
-     * Troca o vídeo para a nova câmera.
-     */
-
     stream =
       newStream;
+
 
     video.srcObject =
       newStream;
 
+
     await video.play();
 
-
-    /*
-     * Agora que a nova câmera está
-     * funcionando, desliga a anterior.
-     */
 
     oldStream
       .getTracks()
@@ -976,11 +1043,6 @@ async function switchCamera() {
         track => track.stop()
       );
 
-
-    /*
-     * O canvas continua sendo gravado
-     * pelo MESMO MediaRecorder.
-     */
 
     recordLabel.textContent =
       getCameraName();
@@ -1001,11 +1063,6 @@ async function switchCamera() {
 
     console.error(error);
 
-    /*
-     * Se a nova câmera não puder ser
-     * aberta, mantém a câmera anterior.
-     */
-
     setState(
       true,
       "Não foi possível trocar a câmera",
@@ -1013,6 +1070,22 @@ async function switchCamera() {
     );
 
   }
+
+}
+
+
+/* ALTERNA MODO DA TELA */
+
+function toggleScreenMode() {
+
+  blackMode =
+    !blackMode;
+
+
+  screen.classList.toggle(
+    "black-mode",
+    blackMode
+  );
 
 }
 
@@ -1066,6 +1139,14 @@ recordToggle.addEventListener(
 cameraSwitch.addEventListener(
   "click",
   switchCamera
+);
+
+
+/* BOTÃO DO MODO DA TELA */
+
+modeSwitch.addEventListener(
+  "click",
+  toggleScreenMode
 );
 
 
