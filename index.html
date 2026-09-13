@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -136,10 +137,8 @@ body { min-height: 100svh; }
   border: 0;
   border-radius: 999px;
   background: rgba(20,20,20,.72);
-  color: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  color: transparent;
+  font-size: 0;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 12px rgba(0,0,0,.3);
 }
@@ -197,8 +196,8 @@ body { min-height: 100svh; }
 
   <div id="clock">00:00</div>
 
-  <!-- BOTÃO DE TROCA DE CÂMERA -->
-  <button id="cameraSwitch" disabled>Traseira</button>
+  <!-- ÁREA DE TOQUE PARA TROCAR A CÂMERA -->
+  <button id="cameraSwitch" disabled aria-label="Alternar câmera"></button>
 
   <div id="state">
     <span id="statusDot"></span>
@@ -342,16 +341,11 @@ async function startCamera() {
     cameraSwitch.disabled = false;
 
 
-    /* Atualiza os nomes conforme a câmera */
-    const cameraName =
+    /* O botão da direita mostra qual câmera está ativa */
+    recordLabel.textContent =
       facingMode === "user"
         ? "Frontal"
         : "Traseira";
-
-
-    cameraSwitch.textContent = cameraName;
-
-    recordLabel.textContent = cameraName;
 
 
     setState(
@@ -443,6 +437,10 @@ function stopCamera() {
   recordToggle.disabled = true;
 
   cameraSwitch.disabled = true;
+
+
+  /* Volta ao texto padrão quando a câmera estiver desligada */
+  recordLabel.textContent = "Câmera";
 
 
   setState(
@@ -543,6 +541,7 @@ function startRecording() {
   );
 
 
+  /* Mantém Frontal/Traseira no botão da direita */
   recordLabel.textContent =
     facingMode === "user"
       ? "Frontal"
@@ -579,6 +578,7 @@ function stopRecording() {
   );
 
 
+  /* Mantém Frontal/Traseira no botão da direita */
   recordLabel.textContent =
     facingMode === "user"
       ? "Frontal"
@@ -732,7 +732,7 @@ recordToggle.addEventListener(
 );
 
 
-/* BOTÃO DE TROCA DE CÂMERA */
+/* ÁREA DE TOQUE PARA TROCAR A CÂMERA */
 
 cameraSwitch.addEventListener(
   "click",
@@ -751,3 +751,4 @@ window.addEventListener(
 
 </body>
 </html>
+```
