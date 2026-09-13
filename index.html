@@ -159,7 +159,7 @@ body { min-height: 100svh; }
   <div id="clock">00:00</div>
 
   <div id="state">
-    <span id="statusDot"></span><span id="stateText">Câmera desligada</span>
+    <span id="statusDot"></span><span id="stateText">Deslize para desbloquear</span>
   </div>
 
   <div id="controls">
@@ -236,7 +236,7 @@ async function startCamera() {
     cameraToggle.querySelector(".icon").textContent = "●";
     cameraLabel.textContent = "Lanterna";
     recordToggle.disabled = false;
-    setState(true, "Câmera ativa");
+    setState(true, "Deslize para desbloquear");
 
     processFrames();
   } catch (error) {
@@ -270,7 +270,7 @@ function stopCamera() {
   cameraToggle.classList.remove("active");
   cameraLabel.textContent = "Lanterna";
   recordToggle.disabled = true;
-  setState(false, "Câmera desligada");
+  setState(false, "Deslize para desbloquear");
 }
 
 function getRecorderMimeType() {
@@ -321,7 +321,7 @@ function stopRecording() {
   recordToggle.classList.remove("recording");
   recordToggle.querySelector(".icon").textContent = "●";
   recordLabel.textContent = "Cãmera";
-  setState(!!stream, stream ? "Câmera ativa" : "Câmera desligada");
+  setState(!!stream, stream ? "Deslize para desbloquear" : "Deslize para desbloquear");
 }
 
 function saveRecording() {
