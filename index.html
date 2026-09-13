@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -182,7 +181,9 @@ body { min-height: 100svh; }
   top: -10px;
 }
 
-#processor { display:none; }
+#processor {
+  display: none;
+}
 </style>
 </head>
 
@@ -197,7 +198,11 @@ body { min-height: 100svh; }
   <div id="clock">00:00</div>
 
   <!-- ÁREA DE TOQUE PARA TROCAR A CÂMERA -->
-  <button id="cameraSwitch" disabled aria-label="Alternar câmera"></button>
+  <button
+    id="cameraSwitch"
+    disabled
+    aria-label="Alternar câmera">
+  </button>
 
   <div id="state">
     <span id="statusDot"></span>
@@ -206,66 +211,120 @@ body { min-height: 100svh; }
 
   <div id="controls">
 
-    <button class="control" id="cameraToggle" aria-label="Ativar ou desativar câmera">
-      <img class="icon-img" src="lanterna.svg" alt="Lanterna">
+    <button
+      class="control"
+      id="cameraToggle"
+      aria-label="Ativar ou desativar câmera">
+
+      <img
+        class="icon-img"
+        src="lanterna.svg"
+        alt="Lanterna">
+
       <span id="cameraLabel">Lanterna</span>
+
     </button>
 
-    <button class="control" id="recordToggle" aria-label="Iniciar ou parar gravação" disabled>
-      <img class="icon-img" src="camera.svg" alt="Câmera">
+    <button
+      class="control"
+      id="recordToggle"
+      aria-label="Iniciar ou parar gravação"
+      disabled>
+
+      <img
+        class="icon-img"
+        src="camera.svg"
+        alt="Câmera">
+
       <span id="recordLabel">Câmera</span>
+
     </button>
 
   </div>
 
 </div>
 
-<video id="cameraFeed" autoplay playsinline muted></video>
+<video
+  id="cameraFeed"
+  autoplay
+  playsinline
+  muted>
+</video>
 
-<canvas id="processor" width="1" height="1"></canvas>
+<canvas
+  id="processor"
+  width="1280"
+  height="720">
+</canvas>
+
 
 <script>
 
 const video = document.getElementById("cameraFeed");
 const canvas = document.getElementById("processor");
 
-const cameraToggle = document.getElementById("cameraToggle");
-const recordToggle = document.getElementById("recordToggle");
-const cameraSwitch = document.getElementById("cameraSwitch");
+const cameraToggle =
+  document.getElementById("cameraToggle");
 
-const cameraLabel = document.getElementById("cameraLabel");
-const recordLabel = document.getElementById("recordLabel");
+const recordToggle =
+  document.getElementById("recordToggle");
 
-const statusDot = document.getElementById("statusDot");
-const stateText = document.getElementById("stateText");
+const cameraSwitch =
+  document.getElementById("cameraSwitch");
 
-const clock = document.getElementById("clock");
-const date = document.getElementById("date");
+const cameraLabel =
+  document.getElementById("cameraLabel");
+
+const recordLabel =
+  document.getElementById("recordLabel");
+
+const statusDot =
+  document.getElementById("statusDot");
+
+const stateText =
+  document.getElementById("stateText");
+
+const clock =
+  document.getElementById("clock");
+
+const date =
+  document.getElementById("date");
+
 
 let stream = null;
+
 let recorder = null;
+
 let recordedChunks = [];
+
 let recording = false;
 
-/* Câmera inicial: traseira */
+let recordingStream = null;
+
 let facingMode = "environment";
 
+let frameLoopRunning = false;
+
+
+/* RELÓGIO */
 
 function updateClock() {
 
   const now = new Date();
 
-  clock.textContent = now.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  });
+  clock.textContent =
+    now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
 
-  date.textContent = now.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long"
-  }).replace(/^./, c => c.toUpperCase());
+  date.textContent =
+    now.toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long"
+    }).replace(/^./, c => c.toUpperCase());
 
 }
 
@@ -274,7 +333,13 @@ updateClock();
 setInterval(updateClock, 1000);
 
 
-function setState(active, text, isRecording=false) {
+/* ESTADO */
+
+function setState(
+  active,
+  text,
+  isRecording = false
+) {
 
   statusDot.classList.toggle(
     "active",
@@ -291,39 +356,60 @@ function setState(active, text, isRecording=false) {
 }
 
 
+/* NOME DA CÂMERA */
+
+function getCameraName() {
+
+  return facingMode === "user"
+    ? "Frontal"
+    : "Traseira";
+
+}
+
+
+/* INICIA A CÂMERA */
+
 async function startCamera() {
 
   if (!navigator.mediaDevices?.getUserMedia) {
 
-    setState(false, "Câmera não disponível");
+    setState(
+      false,
+      "Câmera não disponível"
+    );
 
-    return;
+    return false;
 
   }
 
+
   try {
 
-    stream = await navigator.mediaDevices.getUserMedia({
+    const newStream =
+      await navigator.mediaDevices.getUserMedia({
 
-      video: {
+        video: {
 
-        facingMode: {
-          ideal: facingMode
+          facingMode: {
+            ideal: facingMode
+          },
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+
         },
 
-        width: {
-          ideal: 1280
-        },
+        audio: false
 
-        height: {
-          ideal: 720
-        }
+      });
 
-      },
 
-      audio: false
-
-    });
+    stream = newStream;
 
 
     video.srcObject = stream;
@@ -333,7 +419,8 @@ async function startCamera() {
 
     cameraToggle.classList.add("active");
 
-    cameraLabel.textContent = "Lanterna";
+    cameraLabel.textContent =
+      "Lanterna";
 
 
     recordToggle.disabled = false;
@@ -341,20 +428,23 @@ async function startCamera() {
     cameraSwitch.disabled = false;
 
 
-    /* O botão da direita mostra qual câmera está ativa */
+    /* O BOTÃO DA DIREITA MOSTRA A CÂMERA ATUAL */
+
     recordLabel.textContent =
-      facingMode === "user"
-        ? "Frontal"
-        : "Traseira";
+      getCameraName();
 
 
     setState(
       true,
-      "Deslize para desbloquear"
+      "Deslize para desbloquear",
+      recording
     );
 
 
-    processFrames();
+    startFrameProcessing();
+
+
+    return true;
 
   }
 
@@ -367,29 +457,66 @@ async function startCamera() {
       "Acesso à câmera não autorizado"
     );
 
+    return false;
+
   }
+
+}
+
+
+/* PROCESSAMENTO DO VÍDEO */
+
+function startFrameProcessing() {
+
+  if (frameLoopRunning) {
+    return;
+  }
+
+  frameLoopRunning = true;
+
+  processFrames();
 
 }
 
 
 function processFrames() {
 
-  if (!stream) return;
+  if (!stream) {
+
+    frameLoopRunning = false;
+
+    return;
+
+  }
 
 
   if (video.readyState >= 2) {
 
-    canvas.width = video.videoWidth || 1;
+    const width =
+      video.videoWidth || 1280;
 
-    canvas.height = video.videoHeight || 1;
+    const height =
+      video.videoHeight || 720;
 
 
-    const ctx = canvas.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
+    if (
+      canvas.width !== width ||
+      canvas.height !== height
+    ) {
+
+      canvas.width = width;
+      canvas.height = height;
+
+    }
+
+
+    const ctx =
+      canvas.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
 
 
     ctx.drawImage(
@@ -403,10 +530,14 @@ function processFrames() {
   }
 
 
-  requestAnimationFrame(processFrames);
+  requestAnimationFrame(
+    processFrames
+  );
 
 }
 
+
+/* DESLIGA A CÂMERA */
 
 function stopCamera() {
 
@@ -429,9 +560,12 @@ function stopCamera() {
   video.srcObject = null;
 
 
-  cameraToggle.classList.remove("active");
+  cameraToggle.classList.remove(
+    "active"
+  );
 
-  cameraLabel.textContent = "Lanterna";
+  cameraLabel.textContent =
+    "Lanterna";
 
 
   recordToggle.disabled = true;
@@ -439,8 +573,8 @@ function stopCamera() {
   cameraSwitch.disabled = true;
 
 
-  /* Volta ao texto padrão quando a câmera estiver desligada */
-  recordLabel.textContent = "Câmera";
+  recordLabel.textContent =
+    "Câmera";
 
 
   setState(
@@ -450,6 +584,8 @@ function stopCamera() {
 
 }
 
+
+/* FORMATO DA GRAVAÇÃO */
 
 function getRecorderMimeType() {
 
@@ -465,15 +601,21 @@ function getRecorderMimeType() {
 
 
   return types.find(
-    t => MediaRecorder.isTypeSupported(t)
+    type =>
+      MediaRecorder.isTypeSupported(type)
   ) || "";
 
 }
 
 
+/* INICIA GRAVAÇÃO */
+
 function startRecording() {
 
-  if (!stream || !window.MediaRecorder) {
+  if (
+    !stream ||
+    !window.MediaRecorder
+  ) {
 
     setState(
       true,
@@ -488,46 +630,113 @@ function startRecording() {
   recordedChunks = [];
 
 
-  const mimeType = getRecorderMimeType();
+  /*
+   * A gravação NÃO será feita diretamente
+   * no stream da câmera.
+   *
+   * Ela será feita pelo canvas.
+   *
+   * Isso permite trocar a câmera sem
+   * interromper o MediaRecorder.
+   */
+
+  try {
+
+    if (
+      !recordingStream ||
+      recordingStream.getTracks().length === 0
+    ) {
+
+      recordingStream =
+        canvas.captureStream(30);
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    setState(
+      true,
+      "Gravação não disponível neste navegador"
+    );
+
+    return;
+
+  }
+
+
+  const mimeType =
+    getRecorderMimeType();
 
 
   try {
 
-    recorder = mimeType
+    recorder =
+      mimeType
 
-      ? new MediaRecorder(
-          stream,
-          {
-            mimeType
-          }
-        )
+        ? new MediaRecorder(
+            recordingStream,
+            {
+              mimeType
+            }
+          )
 
-      : new MediaRecorder(stream);
-
-  }
-
-  catch (e) {
-
-    recorder = new MediaRecorder(stream);
+        : new MediaRecorder(
+            recordingStream
+          );
 
   }
 
+  catch (error) {
 
-  recorder.ondataavailable = e => {
+    console.error(error);
+
+    try {
+
+      recorder =
+        new MediaRecorder(
+          recordingStream
+        );
+
+    }
+
+    catch (finalError) {
+
+      console.error(finalError);
+
+      setState(
+        true,
+        "Gravação não disponível neste navegador"
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  recorder.ondataavailable = event => {
 
     if (
-      e.data &&
-      e.data.size > 0
+      event.data &&
+      event.data.size > 0
     ) {
 
-      recordedChunks.push(e.data);
+      recordedChunks.push(
+        event.data
+      );
 
     }
 
   };
 
 
-  recorder.onstop = saveRecording;
+  recorder.onstop =
+    saveRecording;
 
 
   recorder.start();
@@ -541,11 +750,13 @@ function startRecording() {
   );
 
 
-  /* Mantém Frontal/Traseira no botão da direita */
+  /*
+   * O botão continua mostrando
+   * qual câmera está sendo utilizada.
+   */
+
   recordLabel.textContent =
-    facingMode === "user"
-      ? "Frontal"
-      : "Traseira";
+    getCameraName();
 
 
   setState(
@@ -557,13 +768,17 @@ function startRecording() {
 }
 
 
+/* PARA GRAVAÇÃO */
+
 function stopRecording() {
 
   if (
     !recorder ||
     recorder.state === "inactive"
   ) {
+
     return;
+
   }
 
 
@@ -578,11 +793,8 @@ function stopRecording() {
   );
 
 
-  /* Mantém Frontal/Traseira no botão da direita */
   recordLabel.textContent =
-    facingMode === "user"
-      ? "Frontal"
-      : "Traseira";
+    getCameraName();
 
 
   setState(
@@ -592,6 +804,8 @@ function stopRecording() {
 
 }
 
+
+/* SALVA O VÍDEO */
 
 function saveRecording() {
 
@@ -621,11 +835,15 @@ function saveRecording() {
 
 
   const url =
-    URL.createObjectURL(blob);
+    URL.createObjectURL(
+      blob
+    );
 
 
   const a =
-    document.createElement("a");
+    document.createElement(
+      "a"
+    );
 
 
   a.href = url;
@@ -634,7 +852,10 @@ function saveRecording() {
   a.download =
     `video-${new Date()
       .toISOString()
-      .replace(/[:.]/g,"-")}.${ext}`;
+      .replace(
+        /[:.]/g,
+        "-"
+      )}.${ext}`;
 
 
   document.body.appendChild(a);
@@ -647,14 +868,24 @@ function saveRecording() {
 
 
   setTimeout(
-    () => URL.revokeObjectURL(url),
+    () =>
+      URL.revokeObjectURL(url),
     1000
   );
 
 }
 
 
-/* TROCA ENTRE CÂMERA FRONTAL E TRASEIRA */
+/*
+ * TROCA DE CÂMERA
+ *
+ * IMPORTANTE:
+ * NÃO chama stopRecording().
+ *
+ * O MediaRecorder continua gravando
+ * o canvas enquanto a fonte da imagem
+ * muda de câmera.
+ */
 
 async function switchCamera() {
 
@@ -663,35 +894,125 @@ async function switchCamera() {
   }
 
 
-  /* Se estiver gravando, encerra a gravação antes da troca */
-  if (recording) {
-    stopRecording();
-  }
+  const wasRecording =
+    recording;
 
 
-  /* Desliga a câmera atual */
+  /*
+   * Guarda o track atual somente para
+   * desligá-lo depois que a nova câmera
+   * estiver disponível.
+   */
 
-  stream
-    .getTracks()
-    .forEach(track => track.stop());
-
-
-  stream = null;
-
-  video.srcObject = null;
+  const oldStream =
+    stream;
 
 
-  /* Alterna a câmera */
-
-  facingMode =
+  const newFacingMode =
     facingMode === "environment"
       ? "user"
       : "environment";
 
 
-  /* Liga a nova câmera */
+  /*
+   * Tenta abrir a nova câmera primeiro.
+   */
 
-  await startCamera();
+  try {
+
+    const newStream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+
+          facingMode: {
+            exact: newFacingMode
+          },
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+
+        },
+
+        audio: false
+
+      });
+
+
+    /*
+     * Atualiza a câmera selecionada.
+     */
+
+    facingMode =
+      newFacingMode;
+
+
+    /*
+     * Troca o vídeo para a nova câmera.
+     */
+
+    stream =
+      newStream;
+
+    video.srcObject =
+      newStream;
+
+    await video.play();
+
+
+    /*
+     * Agora que a nova câmera está
+     * funcionando, desliga a anterior.
+     */
+
+    oldStream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
+
+
+    /*
+     * O canvas continua sendo gravado
+     * pelo MESMO MediaRecorder.
+     */
+
+    recordLabel.textContent =
+      getCameraName();
+
+
+    setState(
+      true,
+      "Deslize para desbloquear",
+      wasRecording
+    );
+
+
+    startFrameProcessing();
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    /*
+     * Se a nova câmera não puder ser
+     * aberta, mantém a câmera anterior.
+     */
+
+    setState(
+      true,
+      "Não foi possível trocar a câmera",
+      wasRecording
+    );
+
+  }
 
 }
 
@@ -703,11 +1024,15 @@ cameraToggle.addEventListener(
   () => {
 
     if (stream) {
+
       stopCamera();
+
     }
 
     else {
+
       startCamera();
+
     }
 
   }
@@ -721,18 +1046,22 @@ recordToggle.addEventListener(
   () => {
 
     if (recording) {
+
       stopRecording();
+
     }
 
     else {
+
       startRecording();
+
     }
 
   }
 );
 
 
-/* ÁREA DE TOQUE PARA TROCAR A CÂMERA */
+/* BOTÃO DE TROCA DE CÂMERA */
 
 cameraSwitch.addEventListener(
   "click",
@@ -740,7 +1069,7 @@ cameraSwitch.addEventListener(
 );
 
 
-/* Ao sair da página */
+/* AO SAIR DA PÁGINA */
 
 window.addEventListener(
   "pagehide",
@@ -751,4 +1080,3 @@ window.addEventListener(
 
 </body>
 </html>
-```
