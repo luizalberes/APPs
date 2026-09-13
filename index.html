@@ -10,7 +10,9 @@
 <title>Câmera</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
@@ -35,7 +37,10 @@ body {
   transition: background .2s ease;
 }
 
-/* MODO PRETO */
+/* =========================
+   MODO PRETO
+   ========================= */
+
 #screen.black-mode {
   background: #000;
 }
@@ -75,14 +80,16 @@ body {
   transition: opacity .2s ease;
 }
 
-/* No modo preto, data e hora desaparecem */
+/* No modo preto, somente data/hora e background são alterados */
 #screen.black-mode #dynamicArea,
 #screen.black-mode #date,
 #screen.black-mode #clock {
   opacity: 0;
 }
 
-/* CONTROLES */
+/* =========================
+   CONTROLES
+   ========================= */
 
 #controls {
   position: absolute;
@@ -90,6 +97,7 @@ body {
   right: 0;
   bottom: max(5vh, 45px);
   height: 95px;
+  z-index: 10;
 }
 
 .control {
@@ -149,7 +157,9 @@ body {
   opacity: .45;
 }
 
-/* BOTÃO DE TROCA DE CÂMERA */
+/* =========================
+   BOTÃO DE TROCA DE CÂMERA
+   ========================= */
 
 #cameraSwitch {
   position: absolute;
@@ -166,33 +176,16 @@ body {
   font-size: 0;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  z-index: 20;
 }
 
 #cameraSwitch:disabled {
   opacity: .45;
 }
 
-/* BOTÃO DO MODO DA TELA */
-/* Mesmas características visuais do cameraSwitch */
-
-#modeSwitch {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 47px;
-  width: 160px;
-  height: 50px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(20,20,20,.72);
-  color: transparent;
-  font-size: 0;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 2px 12px rgba(0,0,0,.3);
-}
-
-/* ESTADO */
+/* =========================
+   ESTADO
+   ========================= */
 
 #state {
   position: absolute;
@@ -205,11 +198,12 @@ body {
   background: rgba(0,0,0,.48);
   font-size: 13px;
   color: rgba(255,255,255,.9);
-  z-index: 5;
+  z-index: 30;
 }
 
+/* Mantém o indicador visível no modo preto */
 #screen.black-mode #state {
-  background: rgba(0,0,0,.85);
+  background: rgba(0,0,0,.9);
 }
 
 #statusDot {
@@ -229,7 +223,31 @@ body {
   background: #ff3333;
 }
 
-/* FEED DA CÂMERA */
+/* =========================
+   BOTÃO DE ALTERAÇÃO DO MODO
+   ========================= */
+
+#modeSwitch {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 47px;
+  width: 160px;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20,20,20,.72);
+  color: transparent;
+  font-size: 0;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  z-index: 20;
+}
+
+/* =========================
+   CÂMERA
+   ========================= */
 
 #cameraFeed {
   position: fixed;
@@ -257,25 +275,30 @@ body {
 
   <div id="clock">00:00</div>
 
-  <!-- BOTÃO PARA TROCAR A CÂMERA -->
+
+  <!-- BOTÃO DE TROCA DE CÂMERA -->
   <button
     id="cameraSwitch"
     disabled
     aria-label="Alternar câmera">
   </button>
 
-  <!-- ESTADO DA CÂMERA/GRAVAÇÃO -->
+
+  <!-- INDICADOR DE ESTADO -->
   <div id="state">
     <span id="statusDot"></span>
     <span id="stateText">Deslize para desbloquear</span>
   </div>
 
-  <!-- BOTÃO PARA TROCAR O MODO DA TELA -->
+
+  <!-- BOTÃO DE TROCA DO MODO DA TELA -->
   <button
     id="modeSwitch"
     aria-label="Alternar modo da tela">
   </button>
 
+
+  <!-- CONTROLES INFERIORES -->
   <div id="controls">
 
     <button
@@ -291,6 +314,7 @@ body {
       <span id="cameraLabel">Lanterna</span>
 
     </button>
+
 
     <button
       class="control"
@@ -311,6 +335,7 @@ body {
 
 </div>
 
+
 <video
   id="cameraFeed"
   autoplay
@@ -318,13 +343,19 @@ body {
   muted>
 </video>
 
+
 <canvas
   id="processor"
   width="1280"
   height="720">
 </canvas>
 
+
 <script>
+
+/* =========================
+   ELEMENTOS
+   ========================= */
 
 const video =
   document.getElementById("cameraFeed");
@@ -366,6 +397,10 @@ const screen =
   document.getElementById("screen");
 
 
+/* =========================
+   VARIÁVEIS
+   ========================= */
+
 let stream = null;
 
 let recorder = null;
@@ -383,25 +418,33 @@ let frameLoopRunning = false;
 let blackMode = false;
 
 
-/* RELÓGIO */
+/* =========================
+   RELÓGIO
+   ========================= */
 
 function updateClock() {
 
   const now = new Date();
 
   clock.textContent =
-    now.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
+    now.toLocaleTimeString(
+      "pt-BR",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }
+    );
 
   date.textContent =
-    now.toLocaleDateString("pt-BR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long"
-    }).replace(
+    now.toLocaleDateString(
+      "pt-BR",
+      {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+      }
+    ).replace(
       /^./,
       c => c.toUpperCase()
     );
@@ -416,7 +459,9 @@ setInterval(
 );
 
 
-/* ESTADO */
+/* =========================
+   ESTADO
+   ========================= */
 
 function setState(
   active,
@@ -440,7 +485,9 @@ function setState(
 }
 
 
-/* NOME DA CÂMERA */
+/* =========================
+   NOME DA CÂMERA
+   ========================= */
 
 function getCameraName() {
 
@@ -451,7 +498,9 @@ function getCameraName() {
 }
 
 
-/* INICIA CÂMERA */
+/* =========================
+   INICIA CÂMERA
+   ========================= */
 
 async function startCamera() {
 
@@ -503,6 +552,7 @@ async function startCamera() {
     video.srcObject =
       stream;
 
+
     await video.play();
 
 
@@ -510,12 +560,14 @@ async function startCamera() {
       "active"
     );
 
+
     cameraLabel.textContent =
       "Lanterna";
 
 
     recordToggle.disabled =
       false;
+
 
     cameraSwitch.disabled =
       false;
@@ -543,10 +595,12 @@ async function startCamera() {
 
     console.error(error);
 
+
     setState(
       false,
       "Acesso à câmera não autorizado"
     );
+
 
     return false;
 
@@ -555,7 +609,9 @@ async function startCamera() {
 }
 
 
-/* PROCESSAMENTO */
+/* =========================
+   PROCESSAMENTO DO VÍDEO
+   ========================= */
 
 function startFrameProcessing() {
 
@@ -563,8 +619,10 @@ function startFrameProcessing() {
     return;
   }
 
+
   frameLoopRunning =
     true;
+
 
   processFrames();
 
@@ -633,7 +691,9 @@ function processFrames() {
 }
 
 
-/* DESLIGA CÂMERA */
+/* =========================
+   DESLIGA CÂMERA
+   ========================= */
 
 function stopCamera() {
 
@@ -663,12 +723,14 @@ function stopCamera() {
     "active"
   );
 
+
   cameraLabel.textContent =
     "Lanterna";
 
 
   recordToggle.disabled =
     true;
+
 
   cameraSwitch.disabled =
     true;
@@ -686,7 +748,9 @@ function stopCamera() {
 }
 
 
-/* FORMATO DA GRAVAÇÃO */
+/* =========================
+   FORMATO DA GRAVAÇÃO
+   ========================= */
 
 function getRecorderMimeType() {
 
@@ -711,7 +775,9 @@ function getRecorderMimeType() {
 }
 
 
-/* INICIA GRAVAÇÃO */
+/* =========================
+   INICIA GRAVAÇÃO
+   ========================= */
 
 function startRecording() {
 
@@ -753,10 +819,12 @@ function startRecording() {
 
     console.error(error);
 
+
     setState(
       true,
       "Gravação não disponível neste navegador"
     );
+
 
     return;
 
@@ -789,6 +857,7 @@ function startRecording() {
 
     console.error(error);
 
+
     try {
 
       recorder =
@@ -802,10 +871,12 @@ function startRecording() {
 
       console.error(finalError);
 
+
       setState(
         true,
         "Gravação não disponível neste navegador"
       );
+
 
       return;
 
@@ -860,7 +931,9 @@ function startRecording() {
 }
 
 
-/* PARA GRAVAÇÃO */
+/* =========================
+   PARA GRAVAÇÃO
+   ========================= */
 
 function stopRecording() {
 
@@ -898,7 +971,9 @@ function stopRecording() {
 }
 
 
-/* SALVA GRAVAÇÃO */
+/* =========================
+   SALVA GRAVAÇÃO
+   ========================= */
 
 function saveRecording() {
 
@@ -972,7 +1047,9 @@ function saveRecording() {
 }
 
 
-/* TROCA DE CÂMERA */
+/* =========================
+   TROCA DE CÂMERA
+   ========================= */
 
 async function switchCamera() {
 
@@ -1063,6 +1140,7 @@ async function switchCamera() {
 
     console.error(error);
 
+
     setState(
       true,
       "Não foi possível trocar a câmera",
@@ -1074,7 +1152,9 @@ async function switchCamera() {
 }
 
 
-/* ALTERNA MODO DA TELA */
+/* =========================
+   ALTERNA MODO DA TELA
+   ========================= */
 
 function toggleScreenMode() {
 
@@ -1090,7 +1170,9 @@ function toggleScreenMode() {
 }
 
 
-/* BOTÃO LIGA/DESLIGA CÂMERA */
+/* =========================
+   BOTÃO LIGA/DESLIGA CÂMERA
+   ========================= */
 
 cameraToggle.addEventListener(
   "click",
@@ -1112,7 +1194,9 @@ cameraToggle.addEventListener(
 );
 
 
-/* BOTÃO DE GRAVAÇÃO */
+/* =========================
+   BOTÃO DE GRAVAÇÃO
+   ========================= */
 
 recordToggle.addEventListener(
   "click",
@@ -1134,7 +1218,9 @@ recordToggle.addEventListener(
 );
 
 
-/* BOTÃO DE TROCA DE CÂMERA */
+/* =========================
+   BOTÃO DE TROCA DE CÂMERA
+   ========================= */
 
 cameraSwitch.addEventListener(
   "click",
@@ -1142,7 +1228,9 @@ cameraSwitch.addEventListener(
 );
 
 
-/* BOTÃO DO MODO DA TELA */
+/* =========================
+   BOTÃO DE MODO DA TELA
+   ========================= */
 
 modeSwitch.addEventListener(
   "click",
@@ -1150,7 +1238,9 @@ modeSwitch.addEventListener(
 );
 
 
-/* AO SAIR DA PÁGINA */
+/* =========================
+   AO SAIR DA PÁGINA
+   ========================= */
 
 window.addEventListener(
   "pagehide",
