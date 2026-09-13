@@ -165,12 +165,12 @@ body { min-height: 100svh; }
   <div id="controls">
     <button class="control" id="cameraToggle" aria-label="Ativar ou desativar câmera">
       <span class="icon">●</span>
-      <span id="cameraLabel">Ativar</span>
+      <span id="cameraLabel">Lanterna</span>
     </button>
 
     <button class="control" id="recordToggle" aria-label="Iniciar ou parar gravação" disabled>
       <span class="icon">●</span>
-      <span id="recordLabel">Filmar</span>
+      <span id="recordLabel">Câmera</span>
     </button>
   </div>
 </div>
@@ -234,7 +234,7 @@ async function startCamera() {
 
     cameraToggle.classList.add("active");
     cameraToggle.querySelector(".icon").textContent = "●";
-    cameraLabel.textContent = "Desativar";
+    cameraLabel.textContent = "Lanterna";
     recordToggle.disabled = false;
     setState(true, "Câmera ativa");
 
@@ -268,7 +268,7 @@ function stopCamera() {
 
   video.srcObject = null;
   cameraToggle.classList.remove("active");
-  cameraLabel.textContent = "Ativar";
+  cameraLabel.textContent = "Lanterna";
   recordToggle.disabled = true;
   setState(false, "Câmera desligada");
 }
@@ -309,7 +309,7 @@ function startRecording() {
   recording = true;
   recordToggle.classList.add("recording");
   recordToggle.querySelector(".icon").textContent = "■";
-  recordLabel.textContent = "Parar";
+  recordLabel.textContent = "Cãmera";
   setState(true, "Gravando", true);
 }
 
@@ -320,7 +320,7 @@ function stopRecording() {
   recording = false;
   recordToggle.classList.remove("recording");
   recordToggle.querySelector(".icon").textContent = "●";
-  recordLabel.textContent = "Filmar";
+  recordLabel.textContent = "Cãmera";
   setState(!!stream, stream ? "Câmera ativa" : "Câmera desligada");
 }
 
