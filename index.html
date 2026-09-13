@@ -103,11 +103,19 @@ body { min-height: 100svh; }
 }
 
 #cameraToggle.active {
-  background: rgba(45,150,75,.9);
+  background: rgba(190, 190, 190, 0.85);
+}
+
+#cameraToggle.active .icon-img {
+  filter: none;
 }
 
 #recordToggle.recording {
-  background: rgba(190,35,35,.9);
+  background: rgba(190, 190, 190, 0.85);
+}
+
+#recordToggle.active .icon-img {
+  filter: none;
 }
 
 #recordToggle:disabled,
