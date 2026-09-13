@@ -63,8 +63,6 @@ body { min-height: 100svh; }
   font-variant-numeric: tabular-nums;
 }
 
-/* Os dois controles ficam exatamente nas regiões dos ícones
-   de lanterna e câmera da imagem. */
 #controls {
   position: absolute;
   left: 0;
@@ -90,15 +88,18 @@ body { min-height: 100svh; }
   font-weight: 600;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  padding: 0;
 }
 
 #cameraToggle { left: max(7vw, 28px); }
 #recordToggle { right: max(7vw, 28px); }
 
-.icon {
-  font-size: 27px;
-  line-height: 30px;
-  margin-bottom: 2px;
+.icon-img {
+  width: 31px;
+  height: 31px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 3px;
 }
 
 #cameraToggle.active {
@@ -135,6 +136,7 @@ body { min-height: 100svh; }
   background: #777;
   margin-right: 6px;
 }
+
 #statusDot.active { background: #35d66b; }
 #statusDot.recording { background: #ff3333; }
 
@@ -164,12 +166,12 @@ body { min-height: 100svh; }
 
   <div id="controls">
     <button class="control" id="cameraToggle" aria-label="Ativar ou desativar câmera">
-      <span class="icon">●</span>
+      <img class="icon-img" src="lanterna.svg" alt="Lanterna">
       <span id="cameraLabel">Lanterna</span>
     </button>
 
     <button class="control" id="recordToggle" aria-label="Iniciar ou parar gravação" disabled>
-      <span class="icon">●</span>
+      <img class="icon-img" src="camera.svg" alt="Câmera">
       <span id="recordLabel">Câmera</span>
     </button>
   </div>
@@ -233,7 +235,6 @@ async function startCamera() {
     await video.play();
 
     cameraToggle.classList.add("active");
-    cameraToggle.querySelector(".icon").textContent = "●";
     cameraLabel.textContent = "Lanterna";
     recordToggle.disabled = false;
     setState(true, "Deslize para desbloquear");
@@ -308,8 +309,7 @@ function startRecording() {
 
   recording = true;
   recordToggle.classList.add("recording");
-  recordToggle.querySelector(".icon").textContent = "■";
-  recordLabel.textContent = "Cãmera";
+  recordLabel.textContent = "Câmera";
   setState(true, "Gravando", true);
 }
 
@@ -319,9 +319,8 @@ function stopRecording() {
 
   recording = false;
   recordToggle.classList.remove("recording");
-  recordToggle.querySelector(".icon").textContent = "●";
-  recordLabel.textContent = "Cãmera";
-  setState(!!stream, stream ? "Deslize para desbloquear" : "Deslize para desbloquear");
+  recordLabel.textContent = "Câmera";
+  setState(!!stream, "Deslize para desbloquear");
 }
 
 function saveRecording() {
