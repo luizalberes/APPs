@@ -2,103 +2,220 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
 <title>Câmera</title>
 <style>
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100svh;
-  }
-  main {
-    width: min(92vw, 420px);
-    text-align: center;
-  }
-  h1 { font-size: 24px; margin: 0 0 12px; }
-  p { color: #bbb; margin: 0 0 24px; line-height: 1.45; }
-  button {
-    width: 100%;
-    border: 0;
-    border-radius: 14px;
-    padding: 16px;
-    margin-top: 10px;
-    font-size: 17px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  #start { background: #fff; color: #000; }
-  #stop { background: #333; color: #fff; display: none; }
-  #status {
-    margin-top: 18px;
-    min-height: 24px;
-    font-size: 14px;
-    color: #aaa;
-  }
-  .dot {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: #777;
-    margin-right: 7px;
-  }
-  .dot.active { background: #36d66b; }
-  /* O vídeo existe apenas para receber os frames da câmera.
-     Ele permanece fora da área visível. */
-  #cameraFeed {
-    position: fixed;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-    left: -10px;
-    top: -10px;
-  }
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+}
+
+body { min-height: 100svh; }
+
+#screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000 url("lockscreen.png") center center / cover no-repeat;
+}
+
+#dynamicArea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 31%;
+  background: rgba(0,0,0,.88);
+}
+
+#date {
+  position: absolute;
+  top: max(9vh, 70px);
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: clamp(17px,4.5vw,23px);
+  font-weight: 400;
+}
+
+#clock {
+  position: absolute;
+  top: max(12vh,95px);
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: clamp(74px,23vw,128px);
+  line-height: 1;
+  font-weight: 300;
+  letter-spacing: -5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Os dois controles ficam exatamente nas regiões dos ícones
+   de lanterna e câmera da imagem. */
+#controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(5vh, 45px);
+  height: 95px;
+}
+
+.control {
+  position: absolute;
+  bottom: 0;
+  width: 74px;
+  height: 74px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20,20,20,.72);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+
+#cameraToggle { left: max(7vw, 28px); }
+#recordToggle { right: max(7vw, 28px); }
+
+.icon {
+  font-size: 27px;
+  line-height: 30px;
+  margin-bottom: 2px;
+}
+
+#cameraToggle.active {
+  background: rgba(45,150,75,.9);
+}
+
+#recordToggle.recording {
+  background: rgba(190,35,35,.9);
+}
+
+#recordToggle:disabled,
+#cameraToggle:disabled {
+  opacity: .45;
+}
+
+#state {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 104px;
+  white-space: nowrap;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.48);
+  font-size: 13px;
+  color: rgba(255,255,255,.9);
+}
+
+#statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #777;
+  margin-right: 6px;
+}
+#statusDot.active { background: #35d66b; }
+#statusDot.recording { background: #ff3333; }
+
+#cameraFeed {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: -10px;
+  top: -10px;
+}
+
+#processor { display:none; }
 </style>
 </head>
+
 <body>
-<main>
-  <h1>Câmera</h1>
-  <p>A tela permanece preta enquanto a câmera autorizada está ativa.</p>
+<div id="screen">
+  <div id="dynamicArea"></div>
+  <div id="date"></div>
+  <div id="clock">00:00</div>
 
-  <button id="start">Ativar câmera</button>
-  <button id="stop">Desligar câmera</button>
+  <div id="state">
+    <span id="statusDot"></span><span id="stateText">Câmera desligada</span>
+  </div>
 
-  <div id="status"><span class="dot"></span>Câmera desligada</div>
-</main>
+  <div id="controls">
+    <button class="control" id="cameraToggle" aria-label="Ativar ou desativar câmera">
+      <span class="icon">●</span>
+      <span id="cameraLabel">Ativar</span>
+    </button>
+
+    <button class="control" id="recordToggle" aria-label="Iniciar ou parar gravação" disabled>
+      <span class="icon">●</span>
+      <span id="recordLabel">Filmar</span>
+    </button>
+  </div>
+</div>
 
 <video id="cameraFeed" autoplay playsinline muted></video>
-<canvas id="processor" width="1" height="1" hidden></canvas>
+<canvas id="processor" width="1" height="1"></canvas>
 
 <script>
 const video = document.getElementById("cameraFeed");
 const canvas = document.getElementById("processor");
-const startBtn = document.getElementById("start");
-const stopBtn = document.getElementById("stop");
-const status = document.getElementById("status");
+const cameraToggle = document.getElementById("cameraToggle");
+const recordToggle = document.getElementById("recordToggle");
+const cameraLabel = document.getElementById("cameraLabel");
+const recordLabel = document.getElementById("recordLabel");
+const statusDot = document.getElementById("statusDot");
+const stateText = document.getElementById("stateText");
+const clock = document.getElementById("clock");
+const date = document.getElementById("date");
 
 let stream = null;
-let processing = false;
+let recorder = null;
+let recordedChunks = [];
+let recording = false;
 
-function setStatus(active, text) {
-  status.innerHTML =
-    `<span class="dot ${active ? "active" : ""}"></span>${text}`;
+function updateClock() {
+  const now = new Date();
+  clock.textContent = now.toLocaleTimeString("pt-BR", {
+    hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  date.textContent = now.toLocaleDateString("pt-BR", {
+    weekday: "long", day: "numeric", month: "long"
+  }).replace(/^./, c => c.toUpperCase());
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function setState(active, text, isRecording=false) {
+  statusDot.classList.toggle("active", active && !isRecording);
+  statusDot.classList.toggle("recording", isRecording);
+  stateText.textContent = text;
 }
 
 async function startCamera() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    setStatus(false, "Este navegador não permite acesso à câmera.");
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setState(false, "Câmera não disponível");
     return;
   }
 
@@ -115,23 +232,22 @@ async function startCamera() {
     video.srcObject = stream;
     await video.play();
 
-    startBtn.style.display = "none";
-    stopBtn.style.display = "block";
-    setStatus(true, "Câmera ativa");
+    cameraToggle.classList.add("active");
+    cameraToggle.querySelector(".icon").textContent = "●";
+    cameraLabel.textContent = "Desativar";
+    recordToggle.disabled = false;
+    setState(true, "Câmera ativa");
 
-    processing = true;
     processFrames();
   } catch (error) {
     console.error(error);
-    setStatus(false, "Acesso à câmera não autorizado ou indisponível.");
+    setState(false, "Acesso à câmera não autorizado");
   }
 }
 
 function processFrames() {
-  if (!processing || !stream) return;
+  if (!stream) return;
 
-  // Os frames podem ser processados aqui sem serem exibidos na tela.
-  // Exemplo: copiar um frame para o canvas para futuras análises.
   if (video.readyState >= 2) {
     canvas.width = video.videoWidth || 1;
     canvas.height = video.videoHeight || 1;
@@ -143,7 +259,7 @@ function processFrames() {
 }
 
 function stopCamera() {
-  processing = false;
+  if (recording) stopRecording();
 
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
@@ -151,13 +267,90 @@ function stopCamera() {
   }
 
   video.srcObject = null;
-  startBtn.style.display = "block";
-  stopBtn.style.display = "none";
-  setStatus(false, "Câmera desligada");
+  cameraToggle.classList.remove("active");
+  cameraLabel.textContent = "Ativar";
+  recordToggle.disabled = true;
+  setState(false, "Câmera desligada");
 }
 
-startBtn.addEventListener("click", startCamera);
-stopBtn.addEventListener("click", stopCamera);
+function getRecorderMimeType() {
+  const types = [
+    "video/mp4",
+    "video/webm;codecs=vp8",
+    "video/webm"
+  ];
+  return types.find(t => MediaRecorder.isTypeSupported(t)) || "";
+}
+
+function startRecording() {
+  if (!stream || !window.MediaRecorder) {
+    setState(true, "Gravação não disponível neste navegador");
+    return;
+  }
+
+  recordedChunks = [];
+  const mimeType = getRecorderMimeType();
+
+  try {
+    recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+  } catch (e) {
+    recorder = new MediaRecorder(stream);
+  }
+
+  recorder.ondataavailable = e => {
+    if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+  };
+
+  recorder.onstop = saveRecording;
+  recorder.start();
+
+  recording = true;
+  recordToggle.classList.add("recording");
+  recordToggle.querySelector(".icon").textContent = "■";
+  recordLabel.textContent = "Parar";
+  setState(true, "Gravando", true);
+}
+
+function stopRecording() {
+  if (!recorder || recorder.state === "inactive") return;
+  recorder.stop();
+
+  recording = false;
+  recordToggle.classList.remove("recording");
+  recordToggle.querySelector(".icon").textContent = "●";
+  recordLabel.textContent = "Filmar";
+  setState(!!stream, stream ? "Câmera ativa" : "Câmera desligada");
+}
+
+function saveRecording() {
+  if (!recordedChunks.length) return;
+
+  const type = recorder?.mimeType || "video/mp4";
+  const blob = new Blob(recordedChunks, { type });
+  const ext = type.includes("mp4") ? "mp4" : "webm";
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `video-${new Date().toISOString().replace(/[:.]/g,"-")}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+cameraToggle.addEventListener("click", () => {
+  if (stream) stopCamera();
+  else startCamera();
+});
+
+recordToggle.addEventListener("click", () => {
+  if (recording) stopRecording();
+  else startRecording();
+});
 
 window.addEventListener("pagehide", stopCamera);
 </script>
